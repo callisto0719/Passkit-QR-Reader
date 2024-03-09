@@ -1,7 +1,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>jsQR Demo</title>
+  <title>Passkit QRcode Reader</title>
   <script src="./jsQR.js"></script>
   <link href="https://fonts.googleapis.com/css?family=Ropa+Sans" rel="stylesheet">
   <style>
@@ -53,9 +53,8 @@
   </style>
 </head>
 <body>
-  <h1>jsQR Demo</h1>
-  <a id="githubLink" href="https://github.com/cozmo/jsQR">View documentation on Github</a>
-  <p>Pure JavaScript QR code decoding library.</p>
+  <h1>Passkit QRcode Reader</h1>
+  <p>QRコードからチケットをもぎります。</p>
   <div id="loadingMessage">🎥 Unable to access video stream (please make sure you have a webcam enabled)</div>
   <canvas id="canvas" hidden></canvas>
   <div id="output" hidden>
@@ -110,6 +109,35 @@
           outputMessage.hidden = true;
           outputData.parentElement.hidden = false;
           outputData.innerText = code.data;
+          
+          if (confirm("以下のIDのチケットをもぎります。\n" + code.data)) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://asia-northeast1-crafty-automata-305205.cloudfunctions.net/redeemTicket', true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            // エラーハンドリングの追加
+            xhr.onerror = function() {
+              alert("チケットもぎりに失敗しました...\n管理者に連絡してください...!");
+            };
+
+            xhr.onreadystatechange = function() {
+              if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                  console.log("Success:", xhr.responseText);
+                  alert('チケットもぎりに成功しました！');
+                } else {
+                  console.log("Error:", xhr.status);
+                  alert("チケットもぎりに失敗しました...\n管理者に連絡してください...!");
+                }
+              }
+            };
+
+            let data = JSON.stringify({ ticket_id: code.data });
+
+            xhr.send(data);
+
+            console.log("もぎりました。");
+          }
         } else {
           outputMessage.hidden = false;
           outputData.parentElement.hidden = true;
